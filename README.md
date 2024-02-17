@@ -17,4 +17,4 @@ The robot has the following modes:
 - **Seaching Bank**: When the backpack is full the robots go to the nearest available bank it saved. If there are no available banks saved the robot uses a tool that allows the robot to explore a certain area in order to find a bank.
 
 
-The Capitalist Robot was created by @teoparma.
+The Capitalist Robot was created by [Matteo Parma] (https://github.com/teoparma).
