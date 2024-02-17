@@ -5,11 +5,11 @@ use robotics_lib::interface::{Direction, go};
 use robotics_lib::runner::Runnable;
 use robotics_lib::world::tile::{Content, TileType};
 use robotics_lib::world::World;
-use crate::robot::{Mode, MyRobot};
+use crate::robot::{Mode, CapitalistRobot};
 use crate::utils::opposite_direction;
 
 
-pub(crate) fn run_follow_street_mode(robot: &mut MyRobot, world: &mut World){
+pub(crate) fn run_follow_street_mode(robot: &mut CapitalistRobot, world: &mut World){
     let mut view;
     let mut found_street =false;
     let mut directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
@@ -24,7 +24,6 @@ pub(crate) fn run_follow_street_mode(robot: &mut MyRobot, world: &mut World){
             if t.content.index()==7 && t.content.get_value().1.unwrap().start!=t.content.get_value().1.unwrap().end{
                 robot.save_tile(dir, &t.content);
                 robot.mode=Mode::SearchingContent;
-                let _ = robot.file.write_all(format!("Bank saved FollowStreet\n").as_bytes());
                 break
             }else if t.content.to_default()==Content::Building || t.content.to_default()==Content::Market(0){
                 robot.mode= Mode::ScanBank;

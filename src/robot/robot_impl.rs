@@ -1,6 +1,3 @@
-use std::fs::OpenOptions;
-use std::io::Write;
-
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::ChartedMap;
 use charting_tools::ChartingTools;
@@ -10,12 +7,12 @@ use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
 use rust_and_furious_dynamo::dynamo::Dynamo;
 
-use crate::robot::{Mode, MyRobot};
+use crate::robot::{Mode, CapitalistRobot};
 use crate::utils::{enough_distant, get_coords_row_col, go_where_you_can, look_around};
 
 use shared_state::{SharedStateWrapper};
 
-impl MyRobot{
+impl CapitalistRobot {
     pub fn new(shared_state: SharedStateWrapper)-> Self{
         Self{
             robot: Robot::new(),
@@ -30,7 +27,6 @@ impl MyRobot{
             expl_pause_tick_time: 0,
             explorer_pause: false,
             terminated: false,
-            file: OpenOptions::new().create(true).write(true).append(true).open(&"logs.txt").unwrap(),
             first_tick: true,
             shared_state
         }
@@ -122,54 +118,5 @@ impl MyRobot{
         if let Err(_)=go(self, world, self.direction.clone()){
             *self.get_energy_mut()=Dynamo::update_energy();
         }
-    }
-
-
-    pub(crate) fn debug_file(&mut self){
-        let _ = self.file.write_all(self.robot.energy.get_energy_level().to_string().as_bytes());
-        let _ = match self.mode {
-            Mode::ScanBank => {self.file.write_all("\t|\tMod: ScanningBank\t\t|\t".as_bytes())}
-            Mode::ScanContent => {self.file.write_all("\t|\tMod: ScanningContent\t\t|\t".as_bytes())}
-            Mode::SearchingContent => {self.file.write_all("\t|\tMod: SearchingContent\t\t|\t".as_bytes())}
-            Mode::SearchingBank => {self.file.write_all("\t|\tMod: SearchingBank\t\t|\t".as_bytes())}
-            Mode::FollowStreet => {self.file.write_all("\t|\tMod: FollowStreet\t\t|\t".as_bytes())}
-        };
-        let mut string;
-        for (content, size) in self.robot.backpack.get_contents().iter(){
-            match content {
-                Content::Coin(0) => {
-                    string="Coin: ".to_string();
-                    string.push_str(&size.to_string());
-                    string.push_str(&"  ");
-                    let _ = self.file.write_all(string.as_bytes());
-                }
-                Content::Rock(0) => {
-                    string="Rock: ".to_string();
-                    string.push_str(&size.to_string());
-                    string.push_str(&"  ");
-                    let _ = self.file.write_all(string.as_bytes());
-                }
-                Content::Tree(0) => {
-                    string="Tree: ".to_string();
-                    string.push_str(&size.to_string());
-                    string.push_str(&"  ");
-                    let _ = self.file.write_all(string.as_bytes());
-                }
-                Content::Fish(0) => {
-                    string="Fish: ".to_string();
-                    string.push_str(&size.to_string());
-                    string.push_str(&"  ");
-                    let _ = self.file.write_all(string.as_bytes());
-                }
-                Content::Garbage(0) => {
-                    string="Garbage: ".to_string();
-                    string.push_str(&size.to_string());
-                    string.push_str(&"  ");
-                    let _ = self.file.write_all(string.as_bytes());
-                }
-                _ => {}
-            }
-        }
-        let _ = self.file.write_all("\n\n".as_bytes());
     }
 }

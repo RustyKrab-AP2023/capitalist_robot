@@ -3,10 +3,9 @@ use std::io::Write;
 use robotics_lib::world::World;
 use robotics_lib::world::tile::Content;
 use pmp_collect_all::CollectAll;
-use crate::robot::{Mode, MyRobot};
+use crate::robot::{Mode, CapitalistRobot};
 
-pub(crate) fn run_scan_content_mode(robot: &mut MyRobot, world: &mut World){
-    let _ = robot.file.write_all(format!("\nScan Content\n").as_bytes());
+pub(crate) fn run_scan_content_mode(robot: &mut CapitalistRobot, world: &mut World){
     let mut contents=HashMap::new();
     //fill it with the required contents, quantity=0 means it will try to collect all the available content
     contents.insert(Content::Rock(0), 0);

@@ -20,7 +20,7 @@ pub(crate) enum Mode{
     FollowStreet,
     ScanBank
 }
-pub struct MyRobot{
+pub struct CapitalistRobot {
     pub(crate) robot: Robot,
     pub(crate) last_world: Option<Vec<Vec<Tile>>>,
     pub(crate) chart: ChartedMap<Content>,
@@ -33,18 +33,15 @@ pub struct MyRobot{
     pub(crate) expl_pause_tick_time: usize,
     pub(crate) explorer_pause: bool,
     pub(crate) terminated: bool,
-    pub(crate) file: File,
     pub(crate) first_tick: bool,
     pub(crate) shared_state: SharedStateWrapper
 }
 
-impl Runnable for MyRobot{
+impl Runnable for CapitalistRobot {
     fn process_tick(&mut self, world: &mut World) {
         if self.terminated{
            return;
         }
-
-        self.debug_file();
 
         self.tick_init(world);
 

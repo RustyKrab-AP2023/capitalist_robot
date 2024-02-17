@@ -8,10 +8,10 @@ use robotics_lib::world::tile::Content;
 use robotics_lib::world::World;
 use rust_and_furious_dynamo::dynamo::Dynamo;
 use rustici_planner::tool::{Action, Destination, Planner, PlannerError, PlannerResult};
-use crate::robot::{Mode, MyRobot};
+use crate::robot::{Mode, CapitalistRobot};
 use crate::utils::{check_range, get_coords_row_col, manhattan_distance};
 
-pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
+pub(crate) fn run_searching_bank_mode(robot: &mut CapitalistRobot, world: &mut World){
     let mut min_distance =usize::MAX;
     let mut current_distance =usize::MAX;
     let robot_coord =ChartedCoordinate::new(robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
@@ -21,7 +21,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
     let mut banks_saved= false;
     let mut path_found=false;
 
-    let _ = robot.file.write_all(format!("{:?}\n", robot.chart.get(&Content::Bank(0..0))).as_bytes());
     if let Some(mut bank_list)=robot.chart.get(&Content::Bank(0..0)){
         banks_saved= true;
         let mut to_remove=Vec::new();
@@ -66,7 +65,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                                 match action {
                                     Action::Move(direction) => {
                                         if get_coords_row_col(robot, direction)==(bank_coord.0, bank_coord.1){
-                                            let _ =robot.file.write_all(format!("Bank reached\n").as_bytes());
                                             bank_direction=direction.clone();
                                             break
                                         }else{
@@ -86,7 +84,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                                     Ok(deposited_coins) => {
                                         coins_in_backpack= coins_in_backpack-deposited_coins;
                                         bank_range.start=bank_range.start+deposited_coins;
-                                        let _ = robot.file.write_all(format!("Put {} coins\n", deposited_coins).as_bytes());
                                         if deposited_coins == 0 { is_full = true; }
                                     }
                                     Err(err) => {
@@ -94,7 +91,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                                             LibError::NoContent => { no_more_coins = true; }
                                             LibError::NotEnoughEnergy => { *robot.get_energy_mut()=Dynamo::update_energy(); }
                                             _ => {
-                                                let _ = robot.file.write_all(format!("Cannot put: {:?}\n", err).as_bytes());
                                                 errors = true;
                                             }
                                         }
@@ -114,7 +110,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                     }
                 }
                 Err(err) => {
-                    let _ = robot.file.write_all(format!("Error: {:?}\n", err).as_bytes());
                     robot.explorer_pause=true;
                 }
             }
@@ -122,15 +117,12 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
     }
     if !banks_saved || !path_found{
 
-        let _ = robot.file.write_all("\nNo path found\n\n".to_string().as_bytes());
-
         let mut range=30;
         let center= (robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
         let old_robot_coord= center;
         let explorer_destination = Destination::explore(robot.get_energy().get_energy_level(), range);
         match Planner::planner(robot, explorer_destination, world) {
             Ok(res) => {
-                let _ = robot.file.write_all(format!("Planned: {:?}\t", res).as_bytes());
                 match res {
                     PlannerResult::RadiusExplored => {
                         //if the robot did not move
@@ -145,7 +137,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                                 for col_index in center.1-range..center.1+range{
                                     if let Some(tile)=&map[row_index][col_index]{
                                         if tile.content.index()==7 && tile.content.get_value().1.unwrap().start!=tile.content.get_value().1.unwrap().end{
-                                            let _ = robot.file.write_all(format!("Found bank\t").as_bytes());
                                             robot.chart.save(&tile.content, &ChartedCoordinate(row_index, col_index));
                                         }
                                     }
@@ -158,7 +149,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
                 }
             }
             Err(err) => {
-                let _ = robot.file.write_all(format!("Error: {:?}\t", err).as_bytes());
                 match err {
                     PlannerError::MaxEnergyReached => {*robot.get_energy_mut()=Dynamo::update_energy();}
                     PlannerError::RoboticLibError(lib_err) => {
@@ -177,7 +167,6 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
         if world.get_discoverable() > ((robot_map(world).unwrap().len() as f64) * 0.5) as usize{
             robot.terminated=true;
         }
-        let _ = robot.file.write_all(format!("\n").as_bytes());
     }else{
         robot.mode=Mode::SearchingContent;
     }

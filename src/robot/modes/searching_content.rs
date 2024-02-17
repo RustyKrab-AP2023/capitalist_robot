@@ -7,10 +7,10 @@ use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::{Content, TileType};
 use robotics_lib::world::World;
 use rust_and_furious_dynamo::dynamo::Dynamo;
-use crate::robot::{Mode, MyRobot};
+use crate::robot::{Mode, CapitalistRobot};
 use crate::utils::{opposite_direction, quantity};
 
-pub(crate) fn run_searching_content_mode(robot: &mut MyRobot, world: &mut World){
+pub(crate) fn run_searching_content_mode(robot: &mut CapitalistRobot, world: &mut World){
     let mut directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
     let view= robot_view(robot, world);
 
@@ -58,7 +58,6 @@ pub(crate) fn run_searching_content_mode(robot: &mut MyRobot, world: &mut World)
 
         //in order to prevent the robot stucks: after a certain time change direction randomly (except the opposite direction and the actual one of the robot)
         if (robot.count_tick%124)==0{
-            let _ = robot.file.write_all(format!("Change\n").as_bytes());
             loop {
                 directions.shuffle( & mut thread_rng());
                 if directions[0].0!=robot.direction &&  directions[0].0!=opposite_direction(&robot.direction){
