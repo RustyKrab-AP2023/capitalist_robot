@@ -1,2 +1,5 @@
 [registries]
 kellnr = { index = "sparse+https://advancedprogramming.disi.unitn.it/api/v1/crates/", token = "e6a840e4b5a669f0e07586353098435c"}
+
+[net]
+git-fetch-with-cli = true

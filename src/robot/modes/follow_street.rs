@@ -1,7 +1,7 @@
 use std::io::Write;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use rand::seq::SliceRandom;
-use robotics_lib::interface::{Direction, go, robot_map};
+use robotics_lib::interface::{Direction, go};
 use robotics_lib::runner::Runnable;
 use robotics_lib::world::tile::{Content, TileType};
 use robotics_lib::world::World;
@@ -15,7 +15,7 @@ pub(crate) fn run_follow_street_mode(robot: &mut MyRobot, world: &mut World){
     let mut directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
 
     match go(robot, world, robot.direction.clone()) {
-        Ok((v, rob_pos)) => { view=v; }
+        Ok((v, _)) => { view=v; }
         Err(_) => { return }
     }
 

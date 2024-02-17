@@ -1,21 +1,17 @@
 pub(crate) mod robot_impl;
 mod modes;
 
-use std::collections::{HashMap, VecDeque};
 use std::fs::{File};
 use std::io::Write;
-use std::rc::Rc;
-use std::cell::RefCell;
 use charting_tools::charted_map::ChartedMap;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
-use robotics_lib::interface::{debug, Direction, look_at_sky, robot_map};
+use robotics_lib::interface::{Direction};
 use robotics_lib::runner::{Robot, Runnable, backpack::BackPack};
 use robotics_lib::world::{coordinates::Coordinate, tile::Content, World};
-use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::tile::Tile;
 
-use shared_state::{SharedState, StateUpdate, GameWorldUpdate};
+use shared_state::{SharedStateWrapper};
 
 pub(crate) enum Mode{
     SearchingContent,
@@ -38,9 +34,8 @@ pub struct MyRobot{
     pub(crate) explorer_pause: bool,
     pub(crate) terminated: bool,
     pub(crate) file: File,
-    pub(crate) local_shared_state: SharedState,
-
-    pub shared_state_rc: Rc<RefCell<SharedState>>,
+    pub(crate) first_tick: bool,
+    pub(crate) shared_state: SharedStateWrapper
 }
 
 impl Runnable for MyRobot{
@@ -60,8 +55,6 @@ impl Runnable for MyRobot{
             Mode::FollowStreet => {modes::follow_street::run_follow_street_mode(self, world);}
             Mode::ScanBank => {modes::scan_bank::run_scan_bank_mode(self, world);}
         }
-        
-        self.tick_finish(world);
     }
 
     fn handle_event(&mut self, event: Event) {
@@ -69,29 +62,29 @@ impl Runnable for MyRobot{
         match event {
             Event::Ready => {}
             Event::Terminated => {}
-            Event::TimeChanged(_) => {}
+            Event::TimeChanged(_) => {
+                self.shared_state.update_event(event);
+            }
             Event::DayChanged(_) => {
-                self.shared_event_update(event);
+                self.shared_state.update_event(event);
             }
             Event::EnergyRecharged(_) => {
-                self.shared_event_update(event);
-
+                self.shared_state.update_event(event);
             }
             Event::EnergyConsumed(_) => {
-                self.shared_event_update(event);
+                self.shared_state.update_event(event);
             }
             Event::Moved(_, _) => {
-                self.shared_event_update(event);
+                self.shared_state.update_event(event);
             }
             Event::TileContentUpdated(_, _) => {
-                self.shared_event_update(event);
-
+                self.shared_state.update_event(event);
             }
             Event::AddedToBackpack(_, _) => {
-                self.shared_event_update(event);
+                self.shared_state.update_event(event);
             }
             Event::RemovedFromBackpack(_, _) => {
-                self.shared_event_update(event);
+                self.shared_state.update_event(event);
             }
         }
     }

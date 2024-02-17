@@ -1,14 +1,11 @@
 use std::io::Write;
-use std::thread::sleep;
-use std::time::Duration;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::SavedQuantity;
-use robotics_lib::interface::{debug, Direction, discover_tiles, go, put, robot_map, teleport};
+use robotics_lib::interface::{Direction, go, put, robot_map, teleport};
 use robotics_lib::runner::Runnable;
 use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::Content;
 use robotics_lib::world::World;
-use robotics_lib::world::world_generator::get_content_percentage;
 use rust_and_furious_dynamo::dynamo::Dynamo;
 use rustici_planner::tool::{Action, Destination, Planner, PlannerError, PlannerResult};
 use crate::robot::{Mode, MyRobot};
@@ -123,7 +120,7 @@ pub(crate) fn run_searching_bank_mode(robot: &mut MyRobot, world: &mut World){
             }
         }
     }
-    if !banks_saved || !path_found{;
+    if !banks_saved || !path_found{
 
         let _ = robot.file.write_all("\nNo path found\n\n".to_string().as_bytes());
 

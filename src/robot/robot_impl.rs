@@ -1,13 +1,10 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::ChartedMap;
 use charting_tools::ChartingTools;
-use robotics_lib::event::events::Event;
-use robotics_lib::interface::{debug, destroy, go, robot_map, robot_view, Direction};
+use robotics_lib::interface::{debug, destroy, go, Direction};
 use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
@@ -16,10 +13,10 @@ use rust_and_furious_dynamo::dynamo::Dynamo;
 use crate::robot::{Mode, MyRobot};
 use crate::utils::{enough_distant, get_coords_row_col, go_where_you_can, look_around};
 
-use shared_state::{SharedState, StateUpdate, GameWorldUpdate};
+use shared_state::{SharedStateWrapper};
 
 impl MyRobot{
-    pub fn new(shared_state_rc: Rc<RefCell<SharedState>>)-> Self{
+    pub fn new(shared_state: SharedStateWrapper)-> Self{
         Self{
             robot: Robot::new(),
             last_world: None,
@@ -34,28 +31,20 @@ impl MyRobot{
             explorer_pause: false,
             terminated: false,
             file: OpenOptions::new().create(true).write(true).append(true).open(&"logs.txt").unwrap(),
-            local_shared_state: SharedState::new(),
-            shared_state_rc,
+            first_tick: true,
+            shared_state
         }
     }
 
     ///initializes the tick
     pub(crate) fn tick_init(&mut self, world: &mut World){
-        
-        // Cleaning updates queue from local shared state if used before
-        self.local_shared_state.clear();
 
-        // Updating local shared state
-        let (world_map, _world_dimension, robot_pos) = debug(self, world);
-        let robot_map = robot_map(&world).unwrap();
-
-        let mut update = GameWorldUpdate::default();
-        update.set_world(&world_map);
-        update.set_robot_pos(robot_pos);
-        update.set_robot_map(&robot_map);
-        let update = StateUpdate::GameWorld(update);
-
-        self.local_shared_state.add_update(update);
+        //visualizer
+        if self.first_tick{
+            let debug_info = debug(self, world);
+            self.shared_state.update_world(debug_info.0, debug_info.1, debug_info.2);
+            self.first_tick = false;
+        }
 
         //switch between SearchingContent and ScanContent
         if let Mode::SearchingContent=self.mode{
@@ -95,28 +84,6 @@ impl MyRobot{
                 self.mode=Mode::SearchingContent;
             }
         }
-    }
-
-    pub(crate) fn tick_finish(&mut self, world: &mut World) {
-        // Updating local shared state
-        let (world_map, _world_dimension, robot_pos) = debug(self, world);
-        let robot_map = robot_map(&world).unwrap();
-
-        let mut update = GameWorldUpdate::default();
-        update.set_world(&world_map);
-        update.set_robot_map(&robot_map);
-        let update = StateUpdate::GameWorld(update);
-
-        self.local_shared_state.add_update(update);
-        
-        // Updating shared state by replacing it with local one
-        self.shared_state_rc.replace(self.local_shared_state.clone());
-    }
-    
-    pub(crate) fn shared_event_update(&mut self, event: Event) {
-        // Updating local shared state
-        let update = StateUpdate::GameEvent(event);
-        self.local_shared_state.add_update(update);
     }
 
     ///save a tile given the direction

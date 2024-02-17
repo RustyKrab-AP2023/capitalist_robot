@@ -6,7 +6,7 @@ use pmp_collect_all::CollectAll;
 use crate::robot::{Mode, MyRobot};
 
 pub(crate) fn run_scan_content_mode(robot: &mut MyRobot, world: &mut World){
-    robot.file.write_all(format!("\nScan Content\n").as_bytes());
+    let _ = robot.file.write_all(format!("\nScan Content\n").as_bytes());
     let mut contents=HashMap::new();
     //fill it with the required contents, quantity=0 means it will try to collect all the available content
     contents.insert(Content::Rock(0), 0);
