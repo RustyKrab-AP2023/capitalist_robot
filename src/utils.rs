@@ -1,13 +1,18 @@
 use std::cmp::min;
 use std::collections::HashMap;
+use std::thread::sleep;
+use std::time::Duration;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::{ChartedMap, SavedQuantity};
 use rand::{seq::SliceRandom, thread_rng};
-use robotics_lib::interface::{Direction, discover_tiles, go, robot_map, robot_view};
+use robotics_lib::interface::{debug, Direction, discover_tiles, go, put, robot_map, robot_view, teleport};
 use robotics_lib::runner::Runnable;
 use robotics_lib::utils::LibError;
 use robotics_lib::world::{coordinates::Coordinate, World};
 use robotics_lib::world::tile::{Tile, Content, TileType};
+use rust_and_furious_dynamo::dynamo::Dynamo;
+use rustici_planner::tool::Action;
+use crate::CapitalistRobot;
 
 
 ///it discovers tile not discovered yet to save energy
@@ -116,5 +121,55 @@ pub(crate) fn quantity(hm: &HashMap<Content, usize>) -> usize{
 pub(crate) fn check_range(range: &mut usize, center:(usize, usize), world_size: usize){
     if center.0 < *range || center.0+*range > world_size || center.1 < *range || center.1+*range > world_size{
         *range= min(min(center.0, world_size-center.0), min(center.1, world_size-center.1));
+    }
+}
+
+///move the robot following a given vector of Action until it reaches a bank
+pub(crate) fn follow_path(robot: &mut CapitalistRobot, path: Vec<Action>, world: &mut World, bank_coord: &ChartedCoordinate, bank_direction: &mut Direction){
+    for action in path.iter(){
+        if robot.get_energy().get_energy_level() < 300{
+            *robot.get_energy_mut()=Dynamo::update_energy();
+        }
+        match action {
+            Action::Move(direction) => {
+                if get_coords_row_col(robot, direction)==(bank_coord.0, bank_coord.1){
+                    let _ =robot.file.write_all(format!("Bank reached\n").as_bytes());
+                    *bank_direction=direction.clone();
+                    break
+                }else{
+                    go(robot, world, direction.clone()).unwrap();
+                }
+            }
+            Action::Teleport(teleport_coord) => { teleport(robot, world, *teleport_coord).unwrap(); }
+        }
+    }
+}
+
+///put all the coins until the backpack is empty or the bank is full
+pub(crate) fn deposit_coins(robot: &mut CapitalistRobot, world: &mut World, bank_range: &mut Range<usize>, bank_direction: &Direction){
+    let mut coins_in_backpack= *robot.get_backpack().get_contents().get(&Content::Coin(0)).unwrap_or(&0);
+    let mut is_full = false;
+    let mut no_more_coins = false;
+    let mut errors = false;
+
+    while !is_full && !no_more_coins && !errors {
+        match put(robot, world, Content::Coin(0), coins_in_backpack, bank_direction.clone()) {
+            Ok(deposited_coins) => {
+                coins_in_backpack= coins_in_backpack-deposited_coins;
+                bank_range.start=bank_range.start+deposited_coins;
+                let _ = robot.file.write_all(format!("Put {} coins\n", deposited_coins).as_bytes());
+                if deposited_coins == 0 { is_full = true; }
+            }
+            Err(err) => {
+                match err {
+                    LibError::NoContent => { no_more_coins = true; }
+                    LibError::NotEnoughEnergy => { *robot.get_energy_mut()=Dynamo::update_energy(); }
+                    _ => {
+                        let _ = robot.file.write_all(format!("Cannot put: {:?}\n", err).as_bytes());
+                        errors = true;
+                    }
+                }
+            }
+        }
     }
 }
