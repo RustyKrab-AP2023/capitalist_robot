@@ -1,4 +1,3 @@
-use std::io::Write;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use robotics_lib::interface::robot_map;
 use robotics_lib::runner::Runnable;

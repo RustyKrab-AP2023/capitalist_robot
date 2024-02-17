@@ -1,15 +1,12 @@
 pub(crate) mod robot_impl;
 mod modes;
 
-use std::fs::{File};
-use std::io::Write;
 use charting_tools::charted_map::ChartedMap;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::interface::{Direction};
 use robotics_lib::runner::{Robot, Runnable, backpack::BackPack};
 use robotics_lib::world::{coordinates::Coordinate, tile::Content, World};
-use robotics_lib::world::tile::Tile;
 
 use shared_state::{SharedStateWrapper};
 
@@ -22,7 +19,6 @@ pub(crate) enum Mode{
 }
 pub struct CapitalistRobot {
     pub(crate) robot: Robot,
-    pub(crate) last_world: Option<Vec<Vec<Tile>>>,
     pub(crate) chart: ChartedMap<Content>,
     pub(crate) mode: Mode,
     pub(crate) direction: Direction,

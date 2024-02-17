@@ -16,7 +16,6 @@ impl CapitalistRobot {
     pub fn new(shared_state: SharedStateWrapper)-> Self{
         Self{
             robot: Robot::new(),
-            last_world: None,
             chart: ChartingTools::tool::<ChartedMap<Content>>().unwrap(),
             mode: Mode::SearchingContent,
             direction: Direction::Right,

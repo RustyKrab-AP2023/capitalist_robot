@@ -1,4 +1,3 @@
-use std::io::Write;
 use rand::{seq::SliceRandom, Rng, thread_rng};
 use recycle_by_ifrustrati::tool::recycle;
 use robotics_lib::interface::{Direction, go, robot_view};

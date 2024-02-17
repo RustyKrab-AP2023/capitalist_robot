@@ -1,4 +1,3 @@
-use std::io::Write;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use rand::seq::SliceRandom;
 use robotics_lib::interface::{Direction, go};
@@ -10,7 +9,7 @@ use crate::utils::opposite_direction;
 
 
 pub(crate) fn run_follow_street_mode(robot: &mut CapitalistRobot, world: &mut World){
-    let mut view;
+    let view;
     let mut found_street =false;
     let mut directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
 

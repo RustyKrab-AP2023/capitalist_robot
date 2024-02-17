@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::io::Write;
 use robotics_lib::world::World;
 use robotics_lib::world::tile::Content;
 use pmp_collect_all::CollectAll;

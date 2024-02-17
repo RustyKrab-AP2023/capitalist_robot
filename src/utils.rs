@@ -1,11 +1,10 @@
 use std::cmp::min;
 use std::collections::HashMap;
-use std::thread::sleep;
-use std::time::Duration;
+use std::ops::Range;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::{ChartedMap, SavedQuantity};
 use rand::{seq::SliceRandom, thread_rng};
-use robotics_lib::interface::{debug, Direction, discover_tiles, go, put, robot_map, robot_view, teleport};
+use robotics_lib::interface::{Direction, discover_tiles, go, put, robot_map, robot_view, teleport};
 use robotics_lib::runner::Runnable;
 use robotics_lib::utils::LibError;
 use robotics_lib::world::{coordinates::Coordinate, World};
@@ -30,7 +29,7 @@ pub(crate) fn smart_discovery(robot: &mut impl Runnable, world: &mut World, tile
 ///return the direction to a non Street and walkable tale if it finds it
 pub(crate) fn look_around(robot: &impl Runnable, world: &mut World) -> Option<Direction>{
     let mut res=None;
-    let mut directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
+    let directions=[(Direction::Up, (0,1)), (Direction::Right, (1,2)), (Direction::Down, (2,1)), (Direction::Left, (1,0))];
     let view=robot_view(robot, world);
     for (dir, coord) in directions.iter(){
         if let Some(t)=&view[coord.0][coord.1]{
@@ -54,14 +53,6 @@ pub(crate) fn go_where_you_can(robot: &mut impl Runnable, world: &mut World){
     }
 }
 
-pub(crate) fn print_backpack(robot: &impl Runnable){
-    for (c, q) in robot.get_backpack().get_contents().iter(){
-        if c == &Content::Rock(0) || c == &Content::Tree(0) || c == &Content::Fish(0) || c == &Content::Garbage(0) || c == &Content::Coin(0){
-            print!("{c}: {q}\t")
-        }
-    }
-    println!();
-}
 
 ///return the coordinate of a tile given the direction and the robot position
 pub(crate) fn get_coords_row_col(robot: &impl Runnable, direction: &Direction) -> (usize, usize) {
@@ -133,7 +124,6 @@ pub(crate) fn follow_path(robot: &mut CapitalistRobot, path: Vec<Action>, world:
         match action {
             Action::Move(direction) => {
                 if get_coords_row_col(robot, direction)==(bank_coord.0, bank_coord.1){
-                    let _ =robot.file.write_all(format!("Bank reached\n").as_bytes());
                     *bank_direction=direction.clone();
                     break
                 }else{
@@ -157,7 +147,6 @@ pub(crate) fn deposit_coins(robot: &mut CapitalistRobot, world: &mut World, bank
             Ok(deposited_coins) => {
                 coins_in_backpack= coins_in_backpack-deposited_coins;
                 bank_range.start=bank_range.start+deposited_coins;
-                let _ = robot.file.write_all(format!("Put {} coins\n", deposited_coins).as_bytes());
                 if deposited_coins == 0 { is_full = true; }
             }
             Err(err) => {
@@ -165,7 +154,6 @@ pub(crate) fn deposit_coins(robot: &mut CapitalistRobot, world: &mut World, bank
                     LibError::NoContent => { no_more_coins = true; }
                     LibError::NotEnoughEnergy => { *robot.get_energy_mut()=Dynamo::update_energy(); }
                     _ => {
-                        let _ = robot.file.write_all(format!("Cannot put: {:?}\n", err).as_bytes());
                         errors = true;
                     }
                 }

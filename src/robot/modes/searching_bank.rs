@@ -1,27 +1,25 @@
-use std::io::Write;
 use charting_tools::charted_coordinate::ChartedCoordinate;
 use charting_tools::charted_map::SavedQuantity;
-use robotics_lib::interface::{Direction, go, put, robot_map, teleport};
+use robotics_lib::interface::{Direction, robot_map};
 use robotics_lib::runner::Runnable;
 use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::Content;
 use robotics_lib::world::World;
 use rust_and_furious_dynamo::dynamo::Dynamo;
-use rustici_planner::tool::{Action, Destination, Planner, PlannerError, PlannerResult};
+use rustici_planner::tool::{Destination, Planner, PlannerError, PlannerResult};
 use crate::robot::{Mode, CapitalistRobot};
-use crate::utils::{check_range, get_coords_row_col, manhattan_distance};
+use crate::utils::{check_range, deposit_coins, follow_path, manhattan_distance};
 
 pub(crate) fn run_searching_bank_mode(robot: &mut CapitalistRobot, world: &mut World){
     let mut min_distance =usize::MAX;
-    let mut current_distance =usize::MAX;
+    let mut current_distance ;
     let robot_coord =ChartedCoordinate::new(robot.get_coordinate().get_row(), robot.get_coordinate().get_col());
     let mut bank_coord= robot_coord;
     let mut bank_range=0..0;
-    let mut coins_in_backpack= *robot.get_backpack().get_contents().get(&Content::Coin(0)).unwrap_or(&0);
     let mut banks_saved= false;
     let mut path_found=false;
 
-    if let Some(mut bank_list)=robot.chart.get(&Content::Bank(0..0)){
+    if let Some(bank_list)=robot.chart.get(&Content::Bank(0..0)){
         banks_saved= true;
         let mut to_remove=Vec::new();
 
@@ -57,46 +55,9 @@ pub(crate) fn run_searching_bank_mode(robot: &mut CapitalistRobot, world: &mut W
                 Ok(res) => {
                     match res {
                         PlannerResult::Path((path, _)) => {
-                            for action in path.iter(){
-                                if robot.get_energy().get_energy_level() < 300{
-                                    *robot.get_energy_mut()=Dynamo::update_energy();
-                                }
+                            follow_path(robot, path, world, &bank_coord, &mut bank_direction);
 
-                                match action {
-                                    Action::Move(direction) => {
-                                        if get_coords_row_col(robot, direction)==(bank_coord.0, bank_coord.1){
-                                            bank_direction=direction.clone();
-                                            break
-                                        }else{
-                                            go(robot, world, direction.clone()).unwrap();
-                                        }
-                                    }
-                                    Action::Teleport(teleport_coord) => { teleport(robot, world, *teleport_coord).unwrap(); }
-                                }
-                            }
-
-                            //put all the coins until the backpack is empty or the bank is full
-                            let mut is_full = false;
-                            let mut no_more_coins = false;
-                            let mut errors = false;
-                            while !is_full && !no_more_coins && !errors {
-                                match put(robot, world, Content::Coin(0), coins_in_backpack, bank_direction.clone()) {
-                                    Ok(deposited_coins) => {
-                                        coins_in_backpack= coins_in_backpack-deposited_coins;
-                                        bank_range.start=bank_range.start+deposited_coins;
-                                        if deposited_coins == 0 { is_full = true; }
-                                    }
-                                    Err(err) => {
-                                        match err {
-                                            LibError::NoContent => { no_more_coins = true; }
-                                            LibError::NotEnoughEnergy => { *robot.get_energy_mut()=Dynamo::update_energy(); }
-                                            _ => {
-                                                errors = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            deposit_coins(robot, world, &mut bank_range, &bank_direction);
 
                             //update saved bank range, if full replace it with a JollyBlock to let avoid_street work
                             let _ = robot.chart.remove(&Content::Bank(0..0), bank_coord);
@@ -109,7 +70,7 @@ pub(crate) fn run_searching_bank_mode(robot: &mut CapitalistRobot, world: &mut W
                         _ => {}
                     }
                 }
-                Err(err) => {
+                Err(_) => {
                     robot.explorer_pause=true;
                 }
             }
