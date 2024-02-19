@@ -31,6 +31,7 @@ fn check_range_test_valid_range(){
     assert_eq!(range, old_range);
 }
 
+#[test]
 fn check_range_test_invalid_range(){
     let mut range=5;
     let center=(1,3);
