@@ -90,12 +90,11 @@ impl CapitalistRobot {
     ///destroy the content around the robot and if it finds a street enters in FollowStreet mode
     pub(crate) fn check_content(&mut self, world: &mut World, direction: &Direction, t:&Tile){
 
-        //rock, tree, garbage, coin, fish
-        if [0, 2, 4, 10].contains(&t.content.index()){ //tolto 1:Tree, 4: Coin
+        //rock, garbage, fish
+        if [0, 2, 4, 10].contains(&t.content.index()){
             let _ =destroy(self, world, direction.clone());
         }
 
-        //if is not a city              bank, market, building
         if t.tile_type==TileType::Street && !self.avoid_street{
             self.direction=direction.clone();
             self.mode=Mode::FollowStreet;

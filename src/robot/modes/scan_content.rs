@@ -10,11 +10,8 @@ pub(crate) fn run_scan_content_mode(robot: &mut CapitalistRobot, world: &mut Wor
     contents.insert(Content::Rock(0), 0);
     contents.insert(Content::Fish(0), 0);
     contents.insert(Content::Garbage(0), 0);
-    //contents.insert(Content::Tree(0), 0);
-    contents.insert(Content::Coin(0), 0);
 
     //collect all the required items in the range (cross scan)
-    //non capisco se funaziona
     CollectAll::collect_items(robot, world, 5, contents);
 
     robot.mode=Mode::SearchingContent;

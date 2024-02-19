@@ -16,4 +16,4 @@ rust_and_furious_dynamo = {version= "0.1.2", registry = "kellnr"}
 crossterm= "0.27.0"
 rustici_planner = {version= "0.1.1", registry = "kellnr"}
 op_map = {version = "1.0.0", registry = "kellnr"}
-shared_state = { git = "ssh://git@github.com/RustyKrab-AP2023/shared_state.git", branch= "sync"}
+shared_state = { git = "ssh://git@github.com/RustyKrab-AP2023/shared_state.git"}
